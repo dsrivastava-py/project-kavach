@@ -1,0 +1,9 @@
+- tag: courier_parcel_scam
+  language: any
+  severity: 0.65
+  patterns:
+    - "\\b(parcel|package|courier|shipment)\\b.*\\b(seized|customs|drug|narcotic)\\b"
+    - "\\b(aadhar|aadhaar)\\b.*\\b(drug|parcel|illegal)\\b"
+    - "FedEx|DHL|BlueDart.*\\b(illegal|seized|arrested)\\b"
+    - "courier.*\\b(narcotics|drugs|illegal goods)\\b"
+    - "parcel.*your\\s+(name|aadhar)\\b"

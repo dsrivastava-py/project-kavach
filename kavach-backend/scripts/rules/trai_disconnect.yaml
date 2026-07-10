@@ -1,0 +1,10 @@
+- tag: trai_disconnect
+  language: any
+  severity: 0.7
+  patterns:
+    - "\\bTRAI\\b.*\\b(disconnect|block|suspend|illegal)\\b"
+    - "\\b(SIM|mobile number)\\b.*\\b(block|disconnect|suspend)\\b.*\\bTRAI\\b"
+    - "Press\\s+9\\s+to.*officer"
+    - "your\\s+(number|sim|mobile)\\s+will\\s+be\\s+(blocked|disconnected|deactivated)"
+    - "\\bTRAI notice\\b"
+    - "\\b(telecom|TRAI)\\b.*\\b(investigation|illegal activity)\\b"

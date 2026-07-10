@@ -1,0 +1,13 @@
+- tag: cbi_digital_arrest
+  language: any
+  severity: 0.85
+  patterns:
+    - "\\b(CBI|ED|police|officer)\\b.*\\bdigital arrest\\b"
+    - "digital arrest"
+    - "\\byou are under arrest\\b"
+    - "\\b(CBI|ED|enforcement directorate)\\b.*\\b(investigation|case|warrant)\\b"
+    - "do not (move|leave|disconnect).*\\b(officer|CBI|police)\\b"
+    - "\\bwarrant\\b.*\\b(issued|against you)\\b"
+    - "\\b\\d+\\s+criminal cases\\b"
+    - "aadhar.*\\b(criminal|illegal|case)\\b"
+    - "money laundering.*your\\s+(name|account|number)"

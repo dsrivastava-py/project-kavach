@@ -1,0 +1,16 @@
+# Risk engine weights — edit these between test runs, never hardcode in Python.
+# Weights sum to a float delta on the cumulative risk score (0.0–1.0+ range).
+# Thresholds:
+#   0.00–0.30 -> graduated_1  (log only)
+#   0.30–0.50 -> graduated_2  (in-app nudge)
+#   0.50–0.75 -> graduated_3  (guardian push)
+#   0.75+     -> graduated_4  (full-screen interrupt)
+#
+# Tune these against real test scenarios before the demo.
+
+unknown_or_international_number: 0.15
+call_duration_over_30min: 0.10        # additional +0.05 per further 30min, capped at 0.25
+video_call_active: 0.15
+screen_share_start: 0.25
+banking_app_foreground_during_active_call: 0.20
+first_time_payee_detected: 0.20

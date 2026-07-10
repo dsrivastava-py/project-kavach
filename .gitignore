@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.svelte-kit/
+.next/
+
+# Do not ignore .gitignore, the kavach-backend folder, and the README.md
+!.gitignore
+!kavach-backend/
+!README.md
+
+# Local env files
+.env
+.env*.local
+
+# Hackathon raw source & reports
+et-hackathon.md
+ET_AI_Hackathon_2026_Problem_Statements.pdf
+ET_Hackathon_2026_Selection_Report.docx
+build_report.py
+
+# Screenshots and temp files
+context.txt
+dashboard/context.txt
+m375-hero.png
+m375-top.png
+.playwright-mcp/
+
+# OS/System files
+.DS_Store
+Thumbs.db
+
+# Python cache & virtualenvs
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+.env
+.env.local

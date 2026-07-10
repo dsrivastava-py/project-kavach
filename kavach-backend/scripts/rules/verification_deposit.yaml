@@ -1,0 +1,22 @@
+- tag: verification_deposit
+  language: any
+  severity: 0.6
+  patterns:
+    - "\\b(pay|transfer|deposit)\\b.{0,30}\\b(fine|fee|penalty|bail)\\b"
+    - "transfer to (safe|secure|government) account"
+    - "pay.*avoid arrest"
+    - "\\brefundable\\b.*\\b(amount|deposit|fee)\\b"
+    - "verification\\s+(fee|deposit|amount|charge)"
+    - "pay.*₹\\s*\\d+"
+    - "send money.*\\b(officer|CBI|police|TRAI)\\b"
+    - "\\b(UPI|NEFT|IMPS)\\b.*\\b(officer|verify|case)\\b"
+
+- tag: urgency_pressure
+  language: any
+  severity: 0.4
+  patterns:
+    - "\\b(immediately|right now|within\\s+\\d+\\s+(minutes|hours|days))\\b.{0,50}\\b(pay|transfer|call|press)\\b"
+    - "last warning"
+    - "final notice"
+    - "do not ignore"
+    - "your account will be (frozen|blocked|suspended) in \\d+"
