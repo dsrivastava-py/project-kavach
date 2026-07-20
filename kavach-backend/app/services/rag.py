@@ -44,10 +44,22 @@ def _chunk_text(text_body: str) -> list[str]:
 async def _embed(texts: list[str]) -> list[list[float]]:
     import litellm
     s = get_settings()
+    
+    api_key = None
+    if "groq" in s.EMBEDDING_MODEL or s.EMBEDDING_PROVIDER == "groq":
+        api_key = s.GROQ_API_KEY
+    elif "gemini" in s.EMBEDDING_MODEL or s.EMBEDDING_PROVIDER == "gemini":
+        api_key = s.GEMINI_API_KEY
+    elif "openai" in s.EMBEDDING_MODEL or s.EMBEDDING_PROVIDER == "openai":
+        api_key = s.OPENAI_API_KEY
+
+    if not api_key:
+        api_key = s.OPENAI_API_KEY or s.GROQ_API_KEY or s.GEMINI_API_KEY or s.ANTHROPIC_API_KEY or None
+
     resp = await litellm.aembedding(
         model=s.EMBEDDING_MODEL,
         input=texts,
-        api_key=s.OPENAI_API_KEY or None,
+        api_key=api_key,
     )
     return [item["embedding"] for item in resp.data]
 
@@ -89,22 +101,37 @@ async def retrieve_similar(
     try:
         embeddings = await _embed([query_text])
         query_vec = embeddings[0]
-        # pgvector cosine distance operator: <=>
-        result = await session.execute(
-            text(
-                "SELECT script_text, red_flag_tags, 1 - (embedding <=> :vec) AS similarity "
-                "FROM scam_corpus ORDER BY embedding <=> :vec LIMIT :k"
-            ),
-            {"vec": str(query_vec), "k": k},
-        )
-        return [
-            ScamCorpusMatch(
-                script_text=row.script_text,
-                red_flag_tags=list(row.red_flag_tags or []),
-                similarity=float(row.similarity),
+        
+        # Query all corpus entries with valid embeddings
+        stmt = select(ScamCorpus).where(ScamCorpus.embedding.isnot(None))
+        result = await session.execute(stmt)
+        rows = result.scalars().all()
+        
+        import numpy as np
+        
+        matches = []
+        q_arr = np.array(query_vec, dtype=np.float32)
+        q_norm = np.linalg.norm(q_arr)
+        
+        for row in rows:
+            if not row.embedding:
+                continue
+            r_arr = np.array(row.embedding, dtype=np.float32)
+            r_norm = np.linalg.norm(r_arr)
+            if q_norm > 0 and r_norm > 0:
+                sim = float(np.dot(q_arr, r_arr) / (q_norm * r_norm))
+            else:
+                sim = 0.0
+            matches.append(
+                ScamCorpusMatch(
+                    script_text=row.script_text,
+                    red_flag_tags=list(row.red_flag_tags or []),
+                    similarity=sim,
+                )
             )
-            for row in result
-        ]
+        
+        matches.sort(key=lambda m: m.similarity, reverse=True)
+        return matches[:k]
     except Exception as e:
         log.warning("rag_retrieve_failed", error=str(e))
         return []

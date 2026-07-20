@@ -1,0 +1,62 @@
+<resources>
+    <string name="app_name">Kavach</string>
+    <string name="app_tagline">Elder Safety Shield</string>
+
+    <!-- Auth -->
+    <string name="enter_phone">Enter phone number</string>
+    <string name="enter_pairing_code">Enter pairing code</string>
+    <string name="pair_as_guardian">Pair as Guardian</string>
+    <string name="generate_code">Generate Pairing Code</string>
+    <string name="login_as_elder">Login as Elder</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard">Dashboard</string>
+    <string name="incidents">Incidents</string>
+    <string name="alerts">Alerts</string>
+    <string name="deepcheck">Deep Check</string>
+    <string name="settings">Settings</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_alerts">Kavach Alerts</string>
+    <string name="notification_channel_alerts_desc">Real-time scam and safety alerts</string>
+    <string name="notification_channel_signal">Signal Monitoring</string>
+    <string name="notification_channel_signal_desc">Background device monitoring</string>
+
+    <!-- Errors -->
+    <string name="error_no_internet">No internet connection. Please check your network.</string>
+    <string name="error_timeout">Request timed out. Please try again.</string>
+    <string name="error_server">Server error. Please try again later.</string>
+    <string name="error_unauthorized">Session expired. Please log in again.</string>
+    <string name="error_unknown">Something went wrong. Please try again.</string>
+    <string name="retry">Retry</string>
+
+    <!-- Common -->
+    <string name="loading">Loading…</string>
+    <string name="empty_state">Nothing here yet</string>
+    <string name="cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
+    <string name="save">Save</string>
+    <string name="close">Close</string>
+    <string name="back">Back</string>
+    <string name="submit">Submit</string>
+    <string name="logout">Log out</string>
+    <string name="resolve">Resolve</string>
+    <string name="false_positive">Mark as False Positive</string>
+    <string name="generate_evidence">Generate Evidence PDF</string>
+
+    <!-- Deep Check -->
+    <string name="deepcheck_disclaimer">Analysis is assistive only. Do not treat the spoof score as a definitive verdict.</string>
+    <string name="deepcheck_start">Start Deep Check</string>
+    <string name="deepcheck_uploading">Uploading audio…</string>
+    <string name="deepcheck_analyzing">Analyzing…</string>
+    <string name="deepcheck_done">Analysis complete</string>
+
+    <!-- Billing -->
+    <string name="billing_plans">Subscription Plans</string>
+    <string name="current_plan">Current Plan</string>
+    <string name="upgrade">Upgrade</string>
+
+    <!-- About -->
+    <string name="about_kavach">Kavach is an AI-powered elder safety platform that detects scam calls, monitors device activity, and alerts guardians in real time.</string>
+    <string name="version">Version %s</string>
+</resources>

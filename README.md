@@ -24,7 +24,7 @@ If your markdown viewer does not natively support rendering Mermaid diagrams, yo
 | Component | Technology | Role |
 | :--- | :--- | :--- |
 | **Core Framework** | Python 3.12, FastAPI | Asynchronous REST API, high-speed request processing. |
-| **Primary Database** | PostgreSQL 15 + `pgvector` | Persistent storage + semantic vector search for scam scripts. |
+| **Primary Database** | MySQL 8.0 | Persistent storage + in-memory semantic vector search for scam scripts. |
 | **Caching & Pub/Sub** | Redis 7 | Task queue broker, rate limiter cache, and real-time WebSocket pub/sub. |
 | **Background Tasks** | Celery 5.4 | Asynchronous tasks (Risk evaluation, deepcheck queue, push dispatch). |
 | **Graph Database** | Neo4j 5 (Self-Hosted) | Visualizes phone-device linkages to identify fraud/mule rings. |
@@ -67,7 +67,7 @@ app/
 ├── services/                   # Business logic (framework agnostic, no FastAPI imports)
 │   ├── classifier.py           # WhatsApp bot hybrid classification orchestrator
 │   ├── rules_engine.py         # Deterministic scam pattern regex engine
-│   ├── rag.py                  # pgvector-based corpus similarity search
+│   ├── rag.py                  # in-memory NumPy corpus similarity search
 │   ├── llm_router.py           # LiteLLM router wrapper with auto-failover
 │   ├── risk_engine.py          # State machine evaluating behavioral risk levels
 │   ├── deepcheck_chain.py      # LangGraph node sequences for deep-check verdicts
@@ -111,7 +111,7 @@ The audio deep-check is orchestrated by a **LangGraph StateGraph** consisting of
 *   **LangGraph Node Name Collision Fix**: The verdict node is named `"produce_verdict"` (not `"verdict"`) to prevent state-dictionary key naming collisions.
 
 ### E. Tamper-Evident SHA-256 Hash Chain (`app/services/evidence_builder.py`)
-To ensure evidence is legally admissible in court, every state change (incident opened, signals recorded, deep-check verdict, incident resolved) is appended to a cryptographic hash chain stored as a JSONB list in PostgreSQL:
+To ensure evidence is legally admissible in court, every state change (incident opened, signals recorded, deep-check verdict, incident resolved) is appended to a cryptographic hash chain stored as a JSON list in MySQL:
 $$\text{Hash}_n = \text{SHA256}(\text{Hash}_{n-1} + \text{CanonicalJSON}(\text{EventPayload}))$$
 If anyone tries to modify a record in database, the hashes downstream will fail verification, immediately showing tampering.
 
