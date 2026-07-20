@@ -33,20 +33,19 @@ BASE_URL = "http://localhost:8000"
 # Fixtures
 # ---------------------------------------------------------------------------
 
-@pytest.fixture(scope="module")
-def event_loop():
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
+_test_device_id = None
+_test_raw_key = None
+_test_family_id = None
+_test_elder_user = None
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 async def http():
     async with httpx.AsyncClient(base_url=BASE_URL, timeout=30) as client:
         yield client
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 async def db_session():
     """Direct DB session for assertion queries."""
     from app.core.db import SessionLocal
@@ -54,12 +53,13 @@ async def db_session():
         yield session
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 async def test_elder_id(db_session) -> uuid.UUID:
     """
     Create a minimal elder fixture: family → user → elder → device.
     Returns elder.id.
     """
+    global _test_device_id, _test_raw_key, _test_family_id, _test_elder_user
     from app.models.family import Family
     from app.models.user import User
     from app.models.elder import Elder
@@ -82,7 +82,7 @@ async def test_elder_id(db_session) -> uuid.UUID:
     await db_session.flush()
 
     # Device with API key
-    raw_key = "test-device-key-phase2"
+    raw_key = f"test-device-key-phase2-{uuid.uuid4()}"
     key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
     device = Device(
         elder_id=elder.id,
@@ -95,15 +95,15 @@ async def test_elder_id(db_session) -> uuid.UUID:
     await db_session.commit()
 
     # Store device info for use in tests
-    test_elder_id._device_id = device.id
-    test_elder_id._raw_key = raw_key
-    test_elder_id._family_id = family.id
-    test_elder_id._elder_user = elder_user
+    _test_device_id = device.id
+    _test_raw_key = raw_key
+    _test_family_id = family.id
+    _test_elder_user = elder_user
 
     return elder.id
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 async def test_guardian_id(db_session, test_elder_id) -> uuid.UUID:
     """Create a guardian paired to the test elder."""
     from app.models.user import User
@@ -111,7 +111,7 @@ async def test_guardian_id(db_session, test_elder_id) -> uuid.UUID:
 
     phone = f"+91{uuid.uuid4().int % 10_000_000_000:010d}"
     guardian_user = User(
-        family_id=test_elder_id._family_id,
+        family_id=_test_family_id,
         role="guardian",
         phone_e164=phone,
     )
@@ -119,7 +119,7 @@ async def test_guardian_id(db_session, test_elder_id) -> uuid.UUID:
     await db_session.flush()
 
     guardian = Guardian(
-        family_id=test_elder_id._family_id,
+        family_id=_test_family_id,
         user_id=guardian_user.id,
         elder_id=test_elder_id,
         priority_order=1,
@@ -141,11 +141,11 @@ async def _run_risk_evaluate(elder_id: uuid.UUID) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# DoD Test 1: Siege signal sequence → graduated_3 → alert row
+# Phase 2 Integrated Integration Flow
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
-async def test_siege_sequence_reaches_graduated_3(
+async def test_phase2_integration_flow(
     http: httpx.AsyncClient,
     db_session,
     test_elder_id: uuid.UUID,
@@ -160,9 +160,15 @@ async def test_siege_sequence_reaches_graduated_3(
 
     Total = 0.75 → graduated_4 (which is ≥ graduated_3 threshold 0.50)
     → alert row must exist.
+    Also verifies:
+      - Cooldown limits (no double-send of alerts).
+      - False positive resolution (status updates and queryable).
     """
-    device_id = test_elder_id._device_id
-    raw_key = test_elder_id._raw_key
+    # ---------------------------------------------------------------------------
+    # Step 1: Siege signal sequence → graduated_3 → alert row
+    # ---------------------------------------------------------------------------
+    device_id = _test_device_id
+    raw_key = _test_raw_key
     elder_id = test_elder_id
     now = datetime.now(timezone.utc)
 
@@ -223,25 +229,12 @@ async def test_siege_sequence_reaches_graduated_3(
     assert alert.channel == "push"
     assert alert.sent_at is not None
 
-
-# ---------------------------------------------------------------------------
-# DoD Test 2: No double-send within cooldown
-# ---------------------------------------------------------------------------
-
-@pytest.mark.asyncio
-async def test_dispatch_no_double_send_within_cooldown(
-    db_session,
-    test_elder_id: uuid.UUID,
-    test_guardian_id: uuid.UUID,
-):
-    """
-    Evaluate the same incident twice in succession.
-    Alert count for incident+guardian must remain 1 (no duplicate send).
-    """
-    from app.models.alert import Alert
+    # ---------------------------------------------------------------------------
+    # Step 2: No double-send within cooldown
+    # ---------------------------------------------------------------------------
     from app.models.incident import Incident
 
-    # Get the open incident from previous test
+    # Get the open incident from previous step
     incident_result = await db_session.execute(
         select(Incident).where(
             Incident.elder_id == test_elder_id,
@@ -249,7 +242,7 @@ async def test_dispatch_no_double_send_within_cooldown(
         ).order_by(Incident.started_at.desc()).limit(1)
     )
     incident = incident_result.scalar_one_or_none()
-    assert incident is not None, "No open incident found — run test 1 first"
+    assert incident is not None, "No open incident found"
 
     # Run evaluate again (same state, cooldown active)
     await _run_risk_evaluate(test_elder_id)
@@ -266,23 +259,10 @@ async def test_dispatch_no_double_send_within_cooldown(
         f"Double-send detected: {count} alerts for same incident within cooldown"
     )
 
-
-# ---------------------------------------------------------------------------
-# DoD Test 3: false_positive resolve updates incident + is queryable
-# ---------------------------------------------------------------------------
-
-@pytest.mark.asyncio
-async def test_resolve_false_positive(
-    http: httpx.AsyncClient,
-    db_session,
-    test_elder_id: uuid.UUID,
-):
-    """
-    Resolve the open incident as false_positive via guardian JWT.
-    Assert: incident.status = 'false_positive', resolved_at set, queryable.
-    """
+    # ---------------------------------------------------------------------------
+    # Step 3: false_positive resolve updates incident + is queryable
+    # ---------------------------------------------------------------------------
     from app.core.security import issue_token
-    from app.models.incident import Incident
     from app.models.guardian import Guardian
 
     # Get guardian user_id
@@ -293,16 +273,6 @@ async def test_resolve_false_positive(
     assert guardian is not None
 
     token = issue_token(sub=str(guardian.user_id), role="guardian")
-
-    # Get open incident
-    incident_result = await db_session.execute(
-        select(Incident).where(
-            Incident.elder_id == test_elder_id,
-            Incident.status.notin_(["resolved", "false_positive"]),
-        ).order_by(Incident.started_at.desc()).limit(1)
-    )
-    incident = incident_result.scalar_one_or_none()
-    assert incident is not None, "No open incident to resolve"
 
     resp = await http.post(
         f"/api/v1/incidents/{incident.id}/resolve",
@@ -315,6 +285,7 @@ async def test_resolve_false_positive(
     assert data["resolved_at"] is not None
 
     # Refresh and assert in DB
+    await db_session.rollback()
     await db_session.refresh(incident)
     assert incident.status == "false_positive"
     assert incident.resolved_at is not None

@@ -5,7 +5,7 @@ Multi-layer fraud protection backend for elderly digital-arrest scam victims.
 For the comprehensive system architecture, technical handover details, API reference, and frontend integration guide, please refer to the main **[README.md](../README.md)** in the root folder.
 
 ## Stack
-Python 3.12 / FastAPI / PostgreSQL 15 + pgvector / Redis 7 / Neo4j 5 / MinIO / Celery / LiteLLM / LangGraph
+Python 3.12 / MySQL 8.0 / Redis 7 / Neo4j 5 / MinIO / Celery / LiteLLM / LangGraph
 
 ## Quickstart
 
