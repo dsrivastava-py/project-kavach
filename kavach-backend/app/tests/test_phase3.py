@@ -236,8 +236,7 @@ async def test_evidence_pdf_has_pdf_signature():
         session.add(family)
         await session.flush()
 
-        phone = f"+91{uuid.uuid4().int % 10_000_000_000:010d}"
-        user = User(family_id=family.id, role="elder", phone_e164=phone)
+        user = User(family_id=family.id, role="elder", phone_e164="+919999900001")
         session.add(user)
         await session.flush()
 

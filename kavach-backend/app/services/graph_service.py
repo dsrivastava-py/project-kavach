@@ -144,7 +144,7 @@ class GraphService:
 
         async with self._driver.session() as session:
             result = await session.run(cypher, number=phone_number)
-            records = [record async for record in result]
+            records = await result.data()
 
         for record in records:
             path = record.get("path")

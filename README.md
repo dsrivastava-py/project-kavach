@@ -1,8 +1,45 @@
+# 🛡️ Project Kavach — The Family Shield
+
+> *"Google protects a phone. Truecaller screens a number. **Kavach protects a family** — because the digital-arrest scam is not defeated by hearing the call, it is defeated by breaking the silence."*
+
+**Kavach** (कवच — *"armour"*) is a multi-layer fraud-protection platform that shields elderly citizens from **digital-arrest** and financial-fraud scams. Built for the **ET Hackathon** by **Team Believers**.
+
+| | |
+| :--- | :--- |
+| **Team** | **Believers** |
+| **Members** | Devansh Srivastava · Shaurya Singh |
+
+### 📄 Full submission document → [`KAVACH_ET_HACKATHON_SUBMISSION.md`](./KAVACH_ET_HACKATHON_SUBMISSION.md)
+The complete write-up — the idea, the reframe, business model, GTM, competitive analysis, and a component-by-component technical deep dive — lives there. This README is the **developer setup & backend handover guide**.
+
+---
+
+## The Idea in One Paragraph
+
+**Digital arrest is a siege, not a call.** It runs for hours or days; its weapon is *isolation*; its objective is a single UPI/RTGS transfer. So Kavach does three things nobody else does: (1) **it never touches the call audio** — the siege leaks behavioral signals any app can read with normal permissions (long call with an unknown/international number → screen-share → banking app opened → first-time UPI intent); (2) **it doesn't try to convince the terrified victim** — it alerts *one trusted family guardian* whose single phone call collapses the scam; (3) **the elder learns nothing new** — day-to-day protection runs over **WhatsApp**, which they already use.
+
+## The Four Layers
+
+| # | Layer | What it does |
+| :--- | :--- | :--- |
+| **1** | **Fraud Shield (WhatsApp)** | Forward any suspicious text/screenshot/voice note/number → instant verdict + red flags + safe next step in Hindi/English. Zero new app to learn. |
+| **2** | **Siege Sentinel (Android)** | Audio-free on-device risk engine over behavioral signals → graduated risk score → full-screen *"there is no such thing as digital arrest"* interrupt with one-tap 1930. |
+| **3** | **Guardian Mesh** | Elder paired to 1–2 family guardians. Risk threshold crossed → real-time, **content-free** alert with context + one-tap intervene. Attacks the scam's isolation mechanic. |
+| **4** | **Deep-Check & Intelligence** | Opt-in one-tap live-audio check (Whisper STT + LLM + AI-voice heuristic) · Neo4j mule-ring graph · tamper-evident Section-65B evidence packages. |
+
+## Repository Layout
+
+| Path | Contents |
+| :--- | :--- |
+| [`kavach-backend/`](./kavach-backend) | Python 3.12 / FastAPI async API, Celery workers, Docker infra (PostgreSQL+pgvector, Redis, Neo4j, MinIO). |
+| [`kavach-android/`](./kavach-android) | Kotlin / Jetpack Compose app (Clean Architecture) — Siege Sentinel + Guardian console. |
+| [`KAVACH_ET_HACKATHON_SUBMISSION.md`](./KAVACH_ET_HACKATHON_SUBMISSION.md) | Full hackathon submission write-up. |
+
+---
+
 # KAVACH BACKEND — SYSTEM ARCHITECTURE & HANDOVER GUIDE
 
-Welcome to **Project Kavach**, a multi-layer fraud protection backend system designed to protect elderly victims from digital-arrest scams and financial fraud.
-
-This document serves as the developer handover guide, detailing the system architecture, code structure, database schemas, API endpoints, and configuration.
+This section is the developer handover guide, detailing the system architecture, code structure, database schemas, API endpoints, and configuration.
 
 ---
 
@@ -24,7 +61,7 @@ If your markdown viewer does not natively support rendering Mermaid diagrams, yo
 | Component | Technology | Role |
 | :--- | :--- | :--- |
 | **Core Framework** | Python 3.12, FastAPI | Asynchronous REST API, high-speed request processing. |
-| **Primary Database** | MySQL 8.0 | Persistent storage + in-memory semantic vector search for scam scripts. |
+| **Primary Database** | PostgreSQL 15 + `pgvector` | Persistent storage + semantic vector search for scam scripts. |
 | **Caching & Pub/Sub** | Redis 7 | Task queue broker, rate limiter cache, and real-time WebSocket pub/sub. |
 | **Background Tasks** | Celery 5.4 | Asynchronous tasks (Risk evaluation, deepcheck queue, push dispatch). |
 | **Graph Database** | Neo4j 5 (Self-Hosted) | Visualizes phone-device linkages to identify fraud/mule rings. |
@@ -67,7 +104,7 @@ app/
 ├── services/                   # Business logic (framework agnostic, no FastAPI imports)
 │   ├── classifier.py           # WhatsApp bot hybrid classification orchestrator
 │   ├── rules_engine.py         # Deterministic scam pattern regex engine
-│   ├── rag.py                  # in-memory NumPy corpus similarity search
+│   ├── rag.py                  # pgvector-based corpus similarity search
 │   ├── llm_router.py           # LiteLLM router wrapper with auto-failover
 │   ├── risk_engine.py          # State machine evaluating behavioral risk levels
 │   ├── deepcheck_chain.py      # LangGraph node sequences for deep-check verdicts
@@ -111,7 +148,7 @@ The audio deep-check is orchestrated by a **LangGraph StateGraph** consisting of
 *   **LangGraph Node Name Collision Fix**: The verdict node is named `"produce_verdict"` (not `"verdict"`) to prevent state-dictionary key naming collisions.
 
 ### E. Tamper-Evident SHA-256 Hash Chain (`app/services/evidence_builder.py`)
-To ensure evidence is legally admissible in court, every state change (incident opened, signals recorded, deep-check verdict, incident resolved) is appended to a cryptographic hash chain stored as a JSON list in MySQL:
+To ensure evidence is legally admissible in court, every state change (incident opened, signals recorded, deep-check verdict, incident resolved) is appended to a cryptographic hash chain stored as a JSONB list in PostgreSQL:
 $$\text{Hash}_n = \text{SHA256}(\text{Hash}_{n-1} + \text{CanonicalJSON}(\text{EventPayload}))$$
 If anyone tries to modify a record in database, the hashes downstream will fail verification, immediately showing tampering.
 

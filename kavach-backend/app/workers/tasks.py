@@ -83,10 +83,7 @@ async def _risk_engine_evaluate_async(elder_id_str: str) -> dict:
 
     elder_id = uuid.UUID(elder_id_str)
     now = datetime.now(timezone.utc)
-    
-    # Normalize to offset-naive UTC to match database datetime format (MySQL/aiomysql returns naive)
-    now_naive = now.replace(tzinfo=None)
-    window_start_naive = now_naive - timedelta(hours=6)
+    window_start = now - timedelta(hours=6)
 
     async with await _get_session() as session:
         # Find open incident for elder
@@ -102,12 +99,9 @@ async def _risk_engine_evaluate_async(elder_id_str: str) -> dict:
 
         # Determine window start: since incident started or last 6h, whichever is shorter
         if open_incident:
-            started_at = open_incident.started_at
-            if started_at.tzinfo is not None:
-                started_at = started_at.replace(tzinfo=None)
-            effective_window = max(window_start_naive, started_at)
+            effective_window = max(window_start, open_incident.started_at)
         else:
-            effective_window = window_start_naive
+            effective_window = window_start
 
         # Load signal events in window
         events_result = await session.execute(

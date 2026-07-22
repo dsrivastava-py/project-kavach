@@ -13,12 +13,7 @@ create duplicate nodes.
 from __future__ import annotations
 
 import asyncio
-import sys
 import uuid
-from pathlib import Path
-
-# Add parent to path so `app` is importable
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from neo4j import AsyncGraphDatabase
 

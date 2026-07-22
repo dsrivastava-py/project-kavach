@@ -1,44 +1,55 @@
-# Dependencies
+# ─── Dependencies ───────────────────────────────
 node_modules/
 .pnpm-store/
 
-# Build outputs
+# ─── Build outputs ──────────────────────────────
 dist/
 build/
 .svelte-kit/
 .next/
 
-# Do not ignore .gitignore, the kavach-backend folder, and the README.md
-!.gitignore
-!kavach-backend/
-!README.md
+# ─── Android / Gradle ───────────────────────────
+.gradle/
+**/build/
+kavach-android/local.properties
+*.apk
+*.aab
+*.keystore
+*.jks
+captures/
+.cxx/
 
-# Local env files
+# ─── IDE (IntelliJ / Android Studio / VS Code) ──
+.idea/
+*.iml
+.vscode/
+
+# ─── Local env / secrets ────────────────────────
 .env
+.env.local
 .env*.local
+# .env.example is intentionally kept (no secrets)
 
-# Hackathon raw source & reports
+# ─── Hackathon raw source & reports (private) ───
 et-hackathon.md
 ET_AI_Hackathon_2026_Problem_Statements.pdf
 ET_Hackathon_2026_Selection_Report.docx
 build_report.py
 
-# Screenshots and temp files
+# ─── Screenshots and temp files ─────────────────
 context.txt
 dashboard/context.txt
 m375-hero.png
 m375-top.png
 .playwright-mcp/
 
-# OS/System files
+# ─── OS / System files ──────────────────────────
 .DS_Store
 Thumbs.db
 
-# Python cache & virtualenvs
+# ─── Python cache & virtualenvs ─────────────────
 __pycache__/
 *.pyc
 .pytest_cache/
 .venv/
 venv/
-.env
-.env.local

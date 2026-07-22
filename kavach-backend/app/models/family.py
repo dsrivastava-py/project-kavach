@@ -1,9 +1,10 @@
-from sqlalchemy import Enum, String, Text
+from sqlalchemy import String, Text
+from sqlalchemy.dialects.postgresql import ENUM
 from sqlalchemy.orm import Mapped, mapped_column
 from app.core.db import Base
 from app.models.base import TimestampUUIDMixin
 
-plan_tier_enum = Enum("free", "family_99", "family_199", name="plan_tier")
+plan_tier_enum = ENUM("free", "family_99", "family_199", name="plan_tier", create_type=False)
 
 
 class Family(TimestampUUIDMixin, Base):

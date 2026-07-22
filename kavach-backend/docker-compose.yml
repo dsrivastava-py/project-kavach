@@ -8,7 +8,7 @@ services:
     volumes:
       - .:/app
     depends_on:
-      mysql:
+      postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -55,19 +55,18 @@ services:
       retries: 3
       start_period: 10s
 
-  mysql:
-    image: mysql:8.0
+  postgres:
+    image: pgvector/pgvector:pg15
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: kavach
-      MYSQL_USER: kavach
-      MYSQL_PASSWORD: kavach
+      POSTGRES_USER: kavach
+      POSTGRES_PASSWORD: kavach
+      POSTGRES_DB: kavach
     ports:
-      - "3307:3306"
+      - "5432:5432"
     volumes:
-      - mysqldata:/var/lib/mysql
+      - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u kavach -pkavach"]
+      test: ["CMD-SHELL", "pg_isready -U kavach"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -85,8 +84,7 @@ services:
   neo4j:
     image: neo4j:5-community
     environment:
-      NEO4J_AUTH: neo4j/fraudshield123
-      NEO4J_server_default__advertised__address: neo4j
+      NEO4J_AUTH: neo4j/changeme
     ports:
       - "7474:7474"
       - "7687:7687"
@@ -117,6 +115,6 @@ services:
       retries: 5
 
 volumes:
-  mysqldata:
+  pgdata:
   neo4jdata:
   miniodata:
